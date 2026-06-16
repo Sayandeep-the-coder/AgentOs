@@ -1,0 +1,26 @@
+{
+  "name": "agentos",
+  "version": "1.0.0",
+  "description": "Conditional Payment Escrow for Autonomous AI Agents on Avalanche",
+  "main": "index.js",
+  "scripts": {
+    "compile": "npx hardhat compile",
+    "test": "npx hardhat test",
+    "deploy:fuji": "npx hardhat run scripts/deploy.js --network fuji",
+    "seed:fuji": "npx hardhat run scripts/seed.js --network fuji",
+    "demo:pathA": "node demo/pathA.js",
+    "demo:pathB": "node demo/pathB.js"
+  },
+  "keywords": ["blockchain", "escrow", "x402", "erc-8004", "avalanche", "agents"],
+  "author": "Team1 India Speedrun",
+  "license": "MIT",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "hardhat": "^2.22.0"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.0.0",
+    "dotenv": "^16.4.0",
+    "ethers": "^6.13.0"
+  }
+}
