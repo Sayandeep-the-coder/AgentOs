@@ -7,7 +7,6 @@ interface Task {
   payer: string;
   payee: string;
   amount: bigint;
-  conditionHash: string;
   condition: { conditionType: number; fieldName: string; threshold: bigint };
   deadline: bigint;
   status: number;
@@ -19,6 +18,36 @@ interface DeliveryViewerProps {
   task: Task | null;
   taskId: bigint | null;
 }
+
+/* Inline SVG icons */
+const PackageIcon = () => (
+  <svg className="icon-inline" viewBox="0 0 24 24">
+    <line x1="16.5" y1="9.4" x2="7.5" y2="4.21" />
+    <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z" />
+    <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+    <line x1="12" y1="22.08" x2="12" y2="12" />
+  </svg>
+);
+
+const CheckIcon = () => (
+  <svg className="icon-inline" viewBox="0 0 24 24" style={{ color: "var(--colors-semantic-up)" }}>
+    <polyline points="20 6 9 17 4 12" />
+  </svg>
+);
+
+const XIcon = () => (
+  <svg className="icon-inline" viewBox="0 0 24 24" style={{ color: "var(--colors-semantic-down)" }}>
+    <line x1="18" y1="6" x2="6" y2="18" />
+    <line x1="6" y1="6" x2="18" y2="18" />
+  </svg>
+);
+
+const ClockIcon = () => (
+  <svg className="icon-inline" viewBox="0 0 24 24" style={{ color: "var(--colors-muted)" }}>
+    <circle cx="12" cy="12" r="10" />
+    <polyline points="12 6 12 12 16 14" />
+  </svg>
+);
 
 export default function DeliveryViewer({ task, taskId }: DeliveryViewerProps) {
   const { output, parsedOutput } = useMemo(() => {
@@ -59,7 +88,6 @@ export default function DeliveryViewer({ task, taskId }: DeliveryViewerProps) {
       case 1: {
         let fieldStr = "";
         try {
-          // Decode bytes32 field name — remove trailing null bytes
           const hex = task.condition.fieldName;
           const bytes = [];
           for (let i = 2; i < hex.length; i += 2) {
@@ -87,7 +115,7 @@ export default function DeliveryViewer({ task, taskId }: DeliveryViewerProps) {
         } catch {
           fieldStr = "array";
         }
-        return `"${fieldStr}" array must have ≥ ${task.condition.threshold.toString()} entries`;
+        return `"${fieldStr}" array must have \u2265 ${task.condition.threshold.toString()} entries`;
       }
       default: return "Unknown condition";
     }
@@ -98,17 +126,24 @@ export default function DeliveryViewer({ task, taskId }: DeliveryViewerProps) {
       <div className="glass-card full-width animate-slide-up" style={{ animationDelay: "0.3s" }}>
         <div className="card-header">
           <h2>
-            <span style={{ fontSize: "20px" }}>📦</span>
+            <PackageIcon />
             Delivery Viewer
           </h2>
         </div>
         <div className="card-body" style={{ textAlign: "center", padding: "48px 24px" }}>
-          <p style={{ fontSize: "32px", marginBottom: "12px" }}>⏳</p>
-          <p style={{ color: "var(--color-text-muted)", fontSize: "14px" }}>
+          <div style={{
+            width: 40, height: 40, borderRadius: "var(--rounded-md)",
+            background: "var(--colors-surface-soft)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            margin: "0 auto 12px"
+          }}>
+            <ClockIcon />
+          </div>
+          <p style={{ color: "var(--colors-muted)", fontSize: "13px" }}>
             {task ? "Waiting for delivery submission..." : "No settled task to display."}
           </p>
           {task && (
-            <p style={{ color: "var(--color-text-muted)", fontSize: "12px", marginTop: "8px" }}>
+            <p style={{ color: "var(--colors-muted)", fontSize: "11px", marginTop: "6px" }} className="number-sm">
               Task #{taskId?.toString()} is {task.status === 0 ? "LOCKED" : "PENDING_PROOF"}
             </p>
           )}
@@ -121,56 +156,49 @@ export default function DeliveryViewer({ task, taskId }: DeliveryViewerProps) {
     <div className="glass-card full-width animate-slide-up" style={{ animationDelay: "0.3s" }}>
       <div className="card-header">
         <h2>
-          <span style={{ fontSize: "20px" }}>📦</span>
-          Delivery Viewer — Task #{taskId?.toString()}
+          <PackageIcon />
+          Delivery Viewer — Task #<span className="number-sm" style={{ fontWeight: 600 }}>{taskId?.toString()}</span>
         </h2>
-        <span className={`status-badge ${isPassed ? "status-pass" : "status-fail"}`}
-              style={{ fontSize: "14px", padding: "8px 18px" }}>
-          {isPassed ? "✅ CONDITION PASS" : "❌ CONDITION FAIL"}
+        <span
+          className={`status-badge ${isPassed ? "status-pass" : "status-fail"}`}
+          style={{ fontSize: "12px", padding: "6px 14px" }}
+        >
+          {isPassed ? <CheckIcon /> : <XIcon />}
+          {isPassed ? "CONDITION PASS" : "CONDITION FAIL"}
         </span>
       </div>
 
-      <div className="card-body" style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+      <div className="card-body" style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
         {/* Condition Evaluation */}
-        <div style={{
-          padding: "16px 20px",
-          borderRadius: "var(--radius-md)",
-          background: isPassed ? "rgba(16,185,129,0.08)" : "rgba(239,68,68,0.08)",
-          border: `1px solid ${isPassed ? "rgba(16,185,129,0.2)" : "rgba(239,68,68,0.2)"}`,
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "8px" }}>
-            <span style={{
-              fontFamily: "var(--font-mono)", fontSize: "12px", fontWeight: 600,
-              padding: "4px 10px", borderRadius: "var(--radius-sm)",
-              background: "var(--color-bg-secondary)", color: "var(--color-text-secondary)"
+        <div className={`settlement-banner ${isPassed ? "pass" : "fail"}`} style={{ display: "block", marginBottom: "16px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
+            <span className="number-xs" style={{
+              padding: "3px 8px", borderRadius: "var(--rounded-xs)",
+              background: "var(--colors-surface-strong)", color: "var(--colors-ink)"
             }}>
               {condLabel}
             </span>
           </div>
-          <p style={{ fontSize: "14px", color: "var(--color-text-primary)" }}>
+          <p style={{ fontSize: "14px", color: "var(--colors-ink)", lineHeight: 1.5, marginBottom: "8px" }}>
             {getConditionDescription()}
           </p>
-          <p style={{
-            fontSize: "13px", marginTop: "8px",
-            color: isPassed ? "var(--color-pass)" : "var(--color-fail)",
-            fontWeight: 600
-          }}>
-            Result: {isPassed ? "PASSED — USDC released to Research Agent" : "FAILED — USDC returned to Personal Agent"}
+          <p className="number-sm" style={{ fontWeight: 600 }}>
+            {isPassed ? "PASSED \u2014 USDC released to Research Agent" : "FAILED \u2014 USDC returned to Personal Agent"}
           </p>
         </div>
 
         {/* Settlement Details */}
         <div>
           <h3 style={{
-            fontSize: "13px", fontWeight: 600, color: "var(--color-text-secondary)",
-            textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "12px"
+            fontSize: "12px", fontWeight: 600, color: "var(--colors-muted)",
+            textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: "10px"
           }}>
             Settlement Details
           </h3>
-          <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
             <div className="info-row">
               <span className="info-label">Output Hash</span>
-              <span className="info-value" style={{ fontSize: "11px" }}>
+              <span className="info-value number-sm" style={{ fontSize: "12px" }}>
                 {task.outputHash.slice(0, 18)}...
               </span>
             </div>
@@ -189,8 +217,8 @@ export default function DeliveryViewer({ task, taskId }: DeliveryViewerProps) {
         {/* Submitted Output */}
         <div>
           <h3 style={{
-            fontSize: "13px", fontWeight: 600, color: "var(--color-text-secondary)",
-            textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "12px"
+            fontSize: "12px", fontWeight: 600, color: "var(--colors-muted)",
+            textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: "10px"
           }}>
             Submitted Output
           </h3>
@@ -198,7 +226,7 @@ export default function DeliveryViewer({ task, taskId }: DeliveryViewerProps) {
             {parsedOutput ? (
               <pre>{JSON.stringify(parsedOutput, null, 2)}</pre>
             ) : (
-              <pre style={{ color: "var(--color-fail)" }}>{output || "No output data"}</pre>
+              <pre style={{ color: "var(--colors-semantic-down)" }}>{output || "No output data"}</pre>
             )}
           </div>
         </div>

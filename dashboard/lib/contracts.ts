@@ -3,7 +3,7 @@
 
 export const CPE_ABI = [
   "function createTask(uint256,uint8,bytes32,uint256,uint256) returns (uint256)",
-  "function getTask(uint256) view returns (tuple(address payer, address payee, uint256 amount, bytes32 conditionHash, tuple(uint8 conditionType, bytes32 fieldName, uint256 threshold) condition, uint256 deadline, uint8 status, bytes32 outputHash, string resultUri))",
+  "function getTask(uint256) view returns (tuple(address payer, address payee, uint256 amount, tuple(uint8 conditionType, bytes32 fieldName, uint256 threshold) condition, uint256 deadline, uint8 status, bytes32 outputHash, string resultUri))",
   "function getOpenTasks() view returns (uint256[])",
   "function taskCount() view returns (uint256)",
   "function claimExpired(uint256)",

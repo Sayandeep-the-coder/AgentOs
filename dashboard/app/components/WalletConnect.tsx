@@ -8,6 +8,14 @@ interface WalletConnectProps {
   onConnect: (provider: BrowserProvider, address: string) => void;
 }
 
+/* Inline SVG wallet icon */
+const WalletIcon = () => (
+  <svg className="icon-inline" viewBox="0 0 24 24">
+    <path d="M21 12V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2h14a2 2 0 002-2v-5z" />
+    <path d="M16 12a1 1 0 100 2 1 1 0 000-2z" fill="currentColor" stroke="none" />
+  </svg>
+);
+
 export default function WalletConnect({ onConnect }: WalletConnectProps) {
   const [address, setAddress] = useState<string>("");
   const [balance, setBalance] = useState<string>("0");
@@ -47,7 +55,7 @@ export default function WalletConnect({ onConnect }: WalletConnectProps) {
 
   const connectWallet = async () => {
     if (!window.ethereum) {
-      setError("MetaMask not detected. Please install MetaMask.");
+      setError("MetaMask not detected. Install the extension to continue.");
       return;
     }
 
@@ -109,21 +117,24 @@ export default function WalletConnect({ onConnect }: WalletConnectProps) {
     return (
       <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
         <button
-          className="btn btn-primary"
+          className={`btn btn-primary ${connecting ? "btn-loading" : ""}`}
           onClick={connectWallet}
           disabled={connecting}
           id="connect-wallet-btn"
         >
           {connecting ? (
             <>
-              <span className="status-dot" style={{ background: "#fff" }} />
-              Connecting...
+              <span className="status-dot-loading" />
+              Connecting…
             </>
           ) : (
-            <>🦊 Connect MetaMask</>
+            <>
+              <WalletIcon />
+              Connect Wallet
+            </>
           )}
         </button>
-        {error && <span style={{ color: "var(--color-fail)", fontSize: "12px" }}>{error}</span>}
+        {error && <span style={{ color: "var(--colors-semantic-down)", fontSize: "12px" }}>{error}</span>}
       </div>
     );
   }
@@ -131,10 +142,14 @@ export default function WalletConnect({ onConnect }: WalletConnectProps) {
   return (
     <div className="wallet-info">
       {isCorrectChain ? (
-        <span className="network-badge">⛰️ Fuji</span>
+        <span className="network-badge">Fuji</span>
       ) : (
-        <button className="btn btn-secondary" onClick={switchToFuji} style={{ fontSize: "12px", padding: "6px 12px" }}>
-          ⚠️ Switch to Fuji
+        <button
+          className="btn btn-secondary"
+          onClick={switchToFuji}
+          style={{ fontSize: "12px", padding: "6px 14px", height: "32px" }}
+        >
+          Switch to Fuji
         </button>
       )}
       <span className="wallet-balance">{parseFloat(balance).toFixed(2)} USDC</span>

@@ -9,6 +9,22 @@ interface ConditionBuilderProps {
   onTaskCreated: (taskId: bigint) => void;
 }
 
+/* Inline SVG lock icon */
+const LockIcon = () => (
+  <svg className="icon-inline" viewBox="0 0 24 24">
+    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+    <path d="M7 11V7a5 5 0 0110 0v4" />
+  </svg>
+);
+
+/* Inline SVG arrow-up-right icon */
+const ExternalIcon = () => (
+  <svg className="icon-inline" viewBox="0 0 24 24" style={{ width: 12, height: 12 }}>
+    <line x1="7" y1="17" x2="17" y2="7" />
+    <polyline points="7 7 17 7 17 17" />
+  </svg>
+);
+
 export default function ConditionBuilder({ provider, onTaskCreated }: ConditionBuilderProps) {
   const [condType, setCondType] = useState<number>(2);
   const [fieldName, setFieldName] = useState("yield_opportunities");
@@ -36,14 +52,14 @@ export default function ConditionBuilder({ provider, onTaskCreated }: ConditionB
       const fieldBytes = encodeBytes32String(fieldName || "");
 
       // Step 1: Approve USDC
-      setStatus("Approving USDC... (confirm in MetaMask)");
+      setStatus("Approving USDC \u2014 confirm in MetaMask");
       const approveTx = await usdc.approve(CONTRACTS.cpe, amountWei);
       setTxLinks(prev => [...prev, { label: "USDC Approval", hash: approveTx.hash }]);
       await approveTx.wait();
-      setStatus("USDC approved ✓");
+      setStatus("USDC approved");
 
       // Step 2: Create Task
-      setStatus("Creating task... (confirm in MetaMask)");
+      setStatus("Creating task \u2014 confirm in MetaMask");
       const createTx = await cpe.createTask(
         amountWei,
         condType,
@@ -63,7 +79,7 @@ export default function ConditionBuilder({ provider, onTaskCreated }: ConditionB
 
       if (event) {
         const taskId = event.args.taskId;
-        setStatus(`Task ${taskId.toString()} created — USDC locked ✅`);
+        setStatus(`Task ${taskId.toString()} created \u2014 USDC locked`);
         onTaskCreated(taskId);
       }
     } catch (err: unknown) {
@@ -81,18 +97,18 @@ export default function ConditionBuilder({ provider, onTaskCreated }: ConditionB
     <div className="glass-card animate-slide-up" style={{ animationDelay: "0.1s" }}>
       <div className="card-header">
         <h2>
-          <span style={{ fontSize: "20px" }}>⚙️</span>
+          <LockIcon />
           Condition Builder
         </h2>
         {status && (
-          <span className={`status-badge ${status.includes("✅") ? "status-pass" : "status-pending"}`}>
+          <span className={`status-badge ${status.includes("locked") || status.includes("created") ? "status-pass" : "status-pending"}`}>
             <span className="status-dot" />
-            {status.includes("✅") ? "Created" : "Processing"}
+            {status.includes("locked") || status.includes("created") ? "Created" : "Processing"}
           </span>
         )}
       </div>
 
-      <div className="card-body" style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+      <div className="card-body" style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
         {/* Condition Type */}
         <div className="form-group">
           <label>Condition Type</label>
@@ -170,36 +186,35 @@ export default function ConditionBuilder({ provider, onTaskCreated }: ConditionB
 
         {/* Create Button */}
         <button
-          className="btn btn-primary"
+          className={`btn btn-primary ${loading ? "btn-loading" : ""}`}
           onClick={createTask}
           disabled={loading || !provider || !CONTRACTS.cpe}
           id="create-task-btn"
-          style={{ width: "100%", padding: "14px" }}
+          style={{ width: "100%", padding: "14px", height: "48px" }}
         >
           {loading ? (
             <>
-              <span className="status-dot" style={{ background: "#fff" }} />
-              Processing...
+              <span className="status-dot-loading" />
+              Processing…
             </>
           ) : (
-            <>🔒 Lock USDC &amp; Create Task</>
+            <>
+              <LockIcon />
+              Lock USDC & Create Task
+            </>
           )}
         </button>
 
         {/* Error */}
         {error && (
-          <div style={{
-            padding: "12px 16px", borderRadius: "var(--radius-md)",
-            background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)",
-            color: "var(--color-fail)", fontSize: "13px", wordBreak: "break-word"
-          }}>
-            ❌ {error}
+          <div className="error-message">
+            {error}
           </div>
         )}
 
         {/* TX Links */}
         {txLinks.length > 0 && (
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
             {txLinks.map((tx, i) => (
               <a
                 key={i}
@@ -208,15 +223,16 @@ export default function ConditionBuilder({ provider, onTaskCreated }: ConditionB
                 rel="noopener noreferrer"
                 className="tx-link"
               >
-                ↗ {tx.label}: {tx.hash.slice(0, 10)}...{tx.hash.slice(-6)}
+                <ExternalIcon />
+                {tx.label}: {tx.hash.slice(0, 10)}...{tx.hash.slice(-6)}
               </a>
             ))}
           </div>
         )}
 
         {/* Status text */}
-        {status && !status.includes("✅") && (
-          <p style={{ fontSize: "13px", color: "var(--color-text-secondary)" }}>{status}</p>
+        {status && !status.includes("locked") && !status.includes("created") && (
+          <p style={{ fontSize: "12px", color: "var(--colors-muted)", fontFamily: "var(--font-mono)" }}>{status}</p>
         )}
       </div>
     </div>
